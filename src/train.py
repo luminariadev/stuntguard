@@ -7,6 +7,9 @@ from typing import Any
 
 import joblib
 import pandas as pd
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
@@ -14,8 +17,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+
+try:
+    from src.utils import resolve_project_path
+except ImportError:  # pragma: no cover - supports direct script execution
+    from utils import resolve_project_path
 
 
 DEFAULT_FEATURE_COLS = [
@@ -25,18 +31,19 @@ DEFAULT_FEATURE_COLS = [
     "trend_stunting",
 ]
 DEFAULT_TARGET_COL = "risk_label"
-DEFAULT_MODEL_DIR = Path("models")
+DEFAULT_MODEL_DIR = resolve_project_path("models")
 DEFAULT_BEST_MODEL_PATH = DEFAULT_MODEL_DIR / "best_model.joblib"
 RANDOM_STATE = 42
 
 
-class XGBoostRiskClassifier:
+class XGBoostRiskClassifier(ClassifierMixin, BaseEstimator):
     """Small wrapper to train XGBoost with string risk labels."""
 
     def __init__(self, **params: Any) -> None:
         self.params = params
         self.label_encoder = LabelEncoder()
         self.model = None
+        self.classes_ = None
 
     def fit(self, X: pd.DataFrame, y: pd.Series) -> "XGBoostRiskClassifier":
         try:
@@ -48,6 +55,7 @@ class XGBoostRiskClassifier:
             ) from exc
 
         encoded_y = self.label_encoder.fit_transform(y)
+        self.classes_ = self.label_encoder.classes_
         default_params = {
             "n_estimators": 200,
             "max_depth": 3,
@@ -74,6 +82,9 @@ class XGBoostRiskClassifier:
             raise ValueError("Model has not been fitted yet")
         return self.model.predict_proba(X)
 
+    def __sklearn_is_fitted__(self) -> bool:
+        return self.model is not None
+
 
 def _validate_columns(df: pd.DataFrame, columns: list[str]) -> None:
     missing_cols = [col for col in columns if col not in df.columns]
@@ -93,6 +104,7 @@ def _can_stratify(y: pd.Series, test_size: float) -> bool:
 
 
 def _build_preprocessor(X: pd.DataFrame, scale_numeric: bool = False) -> ColumnTransformer:
+    """Build preprocessing for numeric and categorical feature columns."""
     numeric_cols = X.select_dtypes(include="number").columns.tolist()
     categorical_cols = [col for col in X.columns if col not in numeric_cols]
 
@@ -275,7 +287,7 @@ def select_best_model(
 
 def save_model(model, path) -> Path:
     """Save a trained model with joblib and return the output path."""
-    output_path = Path(path)
+    output_path = resolve_project_path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, output_path)
     return output_path
@@ -303,7 +315,7 @@ def train_and_save_best_model(
 
 def main() -> None:
     """Train from the default processed dataset path."""
-    data_path = Path("data/processed/stunting_jabar_features.csv")
+    data_path = resolve_project_path("data/processed/stunting_jabar_features.csv")
     if not data_path.exists():
         raise FileNotFoundError(
             "Processed dataset not found. Expected "

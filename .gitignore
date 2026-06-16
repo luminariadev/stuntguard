@@ -16,6 +16,7 @@ env/
 
 # Streamlit
 .streamlit/secrets.toml
+streamlit.*.log
 
 # Test and build artifacts
 .pytest_cache/
