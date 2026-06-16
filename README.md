@@ -102,6 +102,12 @@ Buka:
 http://localhost:5173
 ```
 
+Untuk prediksi model live dari React, jalankan API di terminal lain:
+
+```bash
+python -m uvicorn api.main:app --reload --port 8000
+```
+
 ## Output Pipeline
 
 Pipeline akan membuat file berikut:

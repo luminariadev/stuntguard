@@ -4,13 +4,17 @@ import {
   Activity,
   AlertTriangle,
   BarChart3,
+  ChevronLeft,
+  ChevronRight,
   Database,
-  Download,
   Gauge,
   HeartPulse,
-  MapPin,
+  Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
   Play,
   ShieldCheck,
+  Sun,
   TrendingUp,
 } from "lucide-react";
 import {
@@ -26,6 +30,8 @@ import {
   YAxis,
 } from "recharts";
 import "./styles.css";
+
+const API_URL = import.meta.env.VITE_STUNTGUARD_API_URL || "http://localhost:8000";
 
 const fallbackData = {
   summary: {
@@ -84,6 +90,14 @@ const fallbackData = {
   ],
 };
 
+const navigation = [
+  ["overview", "Overview", BarChart3],
+  ["dataset", "Dataset", Database],
+  ["training", "Training", Play],
+  ["prediction", "Prediction", Gauge],
+  ["evaluation", "Evaluation", ShieldCheck],
+];
+
 const riskColors = {
   Rendah: "var(--success)",
   Sedang: "var(--warning)",
@@ -92,7 +106,9 @@ const riskColors = {
 
 function fmt(value, digits = 2) {
   if (value === null || value === undefined || Number.isNaN(value)) return "-";
-  if (typeof value === "number") return value.toLocaleString("id-ID", { maximumFractionDigits: digits });
+  if (typeof value === "number") {
+    return value.toLocaleString("id-ID", { maximumFractionDigits: digits });
+  }
   return value;
 }
 
@@ -100,6 +116,9 @@ function App() {
   const [data, setData] = useState(fallbackData);
   const [source, setSource] = useState("fallback");
   const [activeTab, setActiveTab] = useState("overview");
+  const [theme, setTheme] = useState("dark");
+  const [sidebarWidth, setSidebarWidth] = useState(248);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     fetch("/stuntguard-dashboard.json")
@@ -115,37 +134,84 @@ function App() {
   }, []);
 
   const bestModel = useMemo(() => {
-    return [...(data.model_comparison || [])].sort((a, b) => (b.f1_macro || 0) - (a.f1_macro || 0))[0];
+    return [...(data.model_comparison || [])].sort(
+      (a, b) => (b.f1_macro || 0) - (a.f1_macro || 0),
+    )[0];
   }, [data]);
 
+  function startResize(event) {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = sidebarWidth;
+
+    function onMove(moveEvent) {
+      const nextWidth = Math.min(340, Math.max(188, startWidth + moveEvent.clientX - startX));
+      setSidebarWidth(nextWidth);
+    }
+
+    function onUp() {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    }
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
+  const layoutWidth = sidebarCollapsed ? 72 : sidebarWidth;
+
   return (
-    <main className="app-shell">
+    <main
+      className={sidebarCollapsed ? "app-shell collapsed" : "app-shell"}
+      data-theme={theme}
+      style={{ "--sidebar-width": `${layoutWidth}px` }}
+    >
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-mark"><HeartPulse size={22} /></div>
-          <div>
-            <p className="overline">STUNTGUARD</p>
-            <h1>Jabar ML</h1>
+          <div className="brand-mark">
+            <HeartPulse size={22} />
           </div>
+          {!sidebarCollapsed && (
+            <div className="brand-copy">
+              <p className="overline">STUNTGUARD</p>
+              <h1>Jabar ML</h1>
+            </div>
+          )}
         </div>
+
         <nav className="nav-list">
-          {[
-            ["overview", "Overview", BarChart3],
-            ["dataset", "Dataset", Database],
-            ["training", "Training", Play],
-            ["prediction", "Prediction", Gauge],
-            ["evaluation", "Evaluation", ShieldCheck],
-          ].map(([id, label, Icon]) => (
+          {navigation.map(([id, label, Icon]) => (
             <button
               key={id}
               className={activeTab === id ? "nav-item active" : "nav-item"}
               onClick={() => setActiveTab(id)}
+              title={label}
             >
               <Icon size={16} />
-              {label}
+              {!sidebarCollapsed && <span>{label}</span>}
             </button>
           ))}
         </nav>
+
+        <div className="sidebar-actions">
+          <button
+            className="icon-button"
+            onClick={() => setSidebarCollapsed((value) => !value)}
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {sidebarCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+          </button>
+          {!sidebarCollapsed && (
+            <button
+              className="icon-button"
+              onClick={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}
+              title="Toggle theme"
+            >
+              {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+          )}
+        </div>
+        {!sidebarCollapsed && <div className="sidebar-resizer" onMouseDown={startResize} />}
       </aside>
 
       <section className="workspace">
@@ -154,9 +220,18 @@ function App() {
             <p className="overline">Risk Classification Dashboard</p>
             <h2>Stunting Surveillance Jawa Barat</h2>
           </div>
-          <span className={source === "pipeline" ? "chip info" : "chip warning"}>
-            {source === "pipeline" ? "Pipeline Data" : "Demo Fallback"}
-          </span>
+          <div className="topbar-actions">
+            <span className={source === "pipeline" ? "chip info" : "chip warning"}>
+              {source === "pipeline" ? "Pipeline Data" : "Demo Fallback"}
+            </span>
+            <button
+              className="icon-button desktop-theme"
+              onClick={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}
+              title="Toggle theme"
+            >
+              {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+          </div>
         </header>
 
         <section className="hero-panel">
@@ -164,8 +239,8 @@ function App() {
             <p className="overline">Clinical data density</p>
             <h3>Early warning view for regional stunting risk</h3>
             <p>
-              Dashboard React responsif ini mengikuti token warna, spacing, card,
-              chip, dan alert hierarchy dari DESIGN.md.
+              React dashboard ini mengikuti token warna, spacing, card, chip,
+              alert hierarchy, light/dark mode, dan responsive behavior dari DESIGN.md.
             </p>
           </div>
           <div className="hero-status">
@@ -180,6 +255,19 @@ function App() {
         {activeTab === "prediction" && <Prediction />}
         {activeTab === "evaluation" && <Evaluation data={data} />}
       </section>
+
+      <nav className="mobile-nav">
+        {navigation.map(([id, label, Icon]) => (
+          <button
+            key={id}
+            className={activeTab === id ? "mobile-nav-item active" : "mobile-nav-item"}
+            onClick={() => setActiveTab(id)}
+          >
+            <Icon size={17} />
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
     </main>
   );
 }
@@ -219,21 +307,21 @@ function Overview({ data, bestModel }) {
         <Panel title="Tren Rata-rata Stunting">
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={data.yearly_trend}>
-              <CartesianGrid stroke="#334155" />
-              <XAxis dataKey="tahun" stroke="#8D99AE" />
-              <YAxis stroke="#8D99AE" />
-              <Tooltip contentStyle={{ background: "#1E293B", border: "1px solid #334155" }} />
-              <Line type="monotone" dataKey="persentase_stunting" stroke="#3B82F6" strokeWidth={3} dot />
+              <CartesianGrid stroke="var(--grid)" />
+              <XAxis dataKey="tahun" stroke="var(--axis)" />
+              <YAxis stroke="var(--axis)" />
+              <Tooltip contentStyle={{ background: "var(--tooltip-bg)", border: "1px solid var(--surface-2)" }} />
+              <Line type="monotone" dataKey="persentase_stunting" stroke="var(--info)" strokeWidth={3} dot />
             </LineChart>
           </ResponsiveContainer>
         </Panel>
         <Panel title="Distribusi Risiko">
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={data.risk_distribution}>
-              <CartesianGrid stroke="#334155" />
-              <XAxis dataKey="risk_label" stroke="#8D99AE" />
-              <YAxis stroke="#8D99AE" />
-              <Tooltip contentStyle={{ background: "#1E293B", border: "1px solid #334155" }} />
+              <CartesianGrid stroke="var(--grid)" />
+              <XAxis dataKey="risk_label" stroke="var(--axis)" />
+              <YAxis stroke="var(--axis)" />
+              <Tooltip contentStyle={{ background: "var(--tooltip-bg)", border: "1px solid var(--surface-2)" }} />
               <Bar dataKey="jumlah" radius={[4, 4, 0, 0]}>
                 {data.risk_distribution.map((item) => (
                   <Cell key={item.risk_label} fill={riskColors[item.risk_label]} />
@@ -249,10 +337,7 @@ function Overview({ data, bestModel }) {
 
 function Dataset({ data }) {
   return (
-    <Panel
-      title="Dataset Sample"
-      action={<button className="secondary-button"><Download size={15} /> CSV ready</button>}
-    >
+    <Panel title="Dataset Sample">
       <div className="table-wrap">
         <table>
           <thead>
@@ -298,30 +383,79 @@ function Training({ data }) {
 }
 
 function Prediction() {
+  const [form, setForm] = useState({
+    tahun: 2024,
+    lag_1_stunting: 8.11,
+    rolling_mean_3y: 12.07,
+    trend_stunting: 8.97,
+  });
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  function updateField(event) {
+    const { name, value } = event.target;
+    setForm((current) => ({ ...current, [name]: Number(value) }));
+  }
+
+  async function submitPrediction(event) {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    setResult(null);
+
+    try {
+      const response = await fetch(`${API_URL}/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.detail || "Prediction failed");
+      setResult(payload);
+    } catch (err) {
+      setError(`${err.message}. Jalankan API: python -m uvicorn api.main:app --reload --port 8000`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <Panel title="Prediction Console">
-      <div className="prediction-grid">
-        <label>
-          Tahun
-          <input defaultValue="2024" />
-        </label>
-        <label>
-          Lag 1 Stunting
-          <input defaultValue="8.11" />
-        </label>
-        <label>
-          Rolling Mean 3Y
-          <input defaultValue="12.07" />
-        </label>
-        <label>
-          Trend
-          <input defaultValue="8.97" />
-        </label>
-      </div>
-      <div className="result-strip">
-        <MapPin size={18} />
-        <span>Use Python API/FastAPI integration for live model scoring.</span>
-      </div>
+      <form onSubmit={submitPrediction}>
+        <div className="prediction-grid">
+          {[
+            ["tahun", "Tahun"],
+            ["lag_1_stunting", "Lag 1 Stunting"],
+            ["rolling_mean_3y", "Rolling Mean 3Y"],
+            ["trend_stunting", "Trend"],
+          ].map(([name, label]) => (
+            <label key={name}>
+              {label}
+              <input name={name} type="number" step="0.01" value={form[name]} onChange={updateField} />
+            </label>
+          ))}
+        </div>
+        <button className="primary-button" disabled={loading}>
+          {loading ? "Predicting..." : "Predict Risk"}
+          {loading ? <Activity size={16} /> : <ChevronRight size={16} />}
+        </button>
+      </form>
+
+      {result && (
+        <div className="result-strip">
+          <Gauge size={18} />
+          <span>Prediksi: <b>{result.risk_label}</b></span>
+          <span>Confidence: <b>{fmt(result.probability, 3)}</b></span>
+          <span>Model: <b>{result.model_name}</b></span>
+        </div>
+      )}
+      {error && (
+        <div className="result-strip error-strip">
+          <AlertTriangle size={18} />
+          <span>{error}</span>
+        </div>
+      )}
     </Panel>
   );
 }
@@ -344,7 +478,7 @@ function Evaluation({ data }) {
         <ul className="notes">
           <li><TrendingUp size={16} /> Macro F1 menjadi metrik utama.</li>
           <li><AlertTriangle size={16} /> Risiko Tinggi perlu prioritas recall.</li>
-          <li><Activity size={16} /> Data baru dapat diekspor dari pipeline Python.</li>
+          <li><Activity size={16} /> React prediction terhubung ke FastAPI model server.</li>
         </ul>
       </Panel>
     </section>

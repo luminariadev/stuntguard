@@ -10,3 +10,5 @@ joblib
 openpyxl
 pytest
 requests
+fastapi
+uvicorn

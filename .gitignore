@@ -19,6 +19,7 @@ env/
 streamlit.*.log
 frontend/*.log
 frontend/public/stuntguard-dashboard.json
+api.*.log
 
 # Test and build artifacts
 .pytest_cache/
