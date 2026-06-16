@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Test and build artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Local data and generated outputs
+data/raw/*.csv
+data/processed/*.csv
+data/external/*
+models/*.pkl
+models/*.joblib
+reports/figures/*.png
+reports/tables/*.csv
+
+# Keep placeholder files
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+!models/.gitkeep
+!reports/figures/.gitkeep
+!reports/tables/.gitkeep
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
