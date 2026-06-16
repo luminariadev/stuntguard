@@ -2,12 +2,12 @@ import streamlit as st
 
 
 st.set_page_config(
-    page_title="StuntGuard Jabar ML",
+    page_title="StuntGuard Jabar",
     page_icon=":bar_chart:",
     layout="wide",
 )
 
-st.title("StuntGuard Jabar ML")
+st.title("StuntGuard Jabar")
 st.subheader("Klasifikasi risiko stunting kabupaten/kota di Jawa Barat")
 
 st.write(
