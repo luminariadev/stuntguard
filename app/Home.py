@@ -1,14 +1,11 @@
 import streamlit as st
 
-from dashboard_utils import inject_design_system
-
 
 st.set_page_config(
     page_title="StuntGuard Jabar ML",
     page_icon=":bar_chart:",
     layout="wide",
 )
-inject_design_system()
 
 st.title("StuntGuard Jabar ML")
 st.subheader("Klasifikasi risiko stunting kabupaten/kota di Jawa Barat")

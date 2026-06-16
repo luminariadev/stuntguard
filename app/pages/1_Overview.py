@@ -11,7 +11,6 @@ from dashboard_utils import (
     STUNTING_COL,
     TARGET_COL,
     load_dataset,
-    metric_panel,
     page_setup,
     project_relative,
     show_missing_data_message,
@@ -37,17 +36,13 @@ avg_stunting = (
 )
 
 col1, col2, col3, col4 = st.columns(4)
-with col1:
-    metric_panel("Jumlah Data", f"{total_rows:,}")
-with col2:
-    metric_panel("Kabupaten/Kota", f"{total_regions:,}")
-with col3:
-    metric_panel("Rentang Tahun", f"{year_min} - {year_max}")
-with col4:
-    metric_panel(
-        "Rata-rata Stunting",
-        "-" if avg_stunting is None or pd.isna(avg_stunting) else f"{avg_stunting:.2f}%",
-    )
+col1.metric("Jumlah Data", f"{total_rows:,}")
+col2.metric("Kabupaten/Kota", f"{total_regions:,}")
+col3.metric("Rentang Tahun", f"{year_min} - {year_max}")
+col4.metric(
+    "Rata-rata Stunting",
+    "-" if avg_stunting is None or pd.isna(avg_stunting) else f"{avg_stunting:.2f}%",
+)
 
 if "tahun" in df.columns and STUNTING_COL in df.columns and not df.empty:
     st.markdown("### Tren Tahunan")
