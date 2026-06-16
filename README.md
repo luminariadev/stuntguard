@@ -76,6 +76,32 @@ Buka:
 http://localhost:8501
 ```
 
+## React Dashboard Branch
+
+Branch ini juga menyediakan dashboard React responsif di folder `frontend/` yang mengikuti `DESIGN.md`.
+
+Siapkan data dashboard:
+
+```bash
+python -m src.fetch_data
+python -m src.pipeline
+python -m src.export_frontend_data
+```
+
+Jalankan frontend React:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Buka:
+
+```text
+http://localhost:5173
+```
+
 ## Output Pipeline
 
 Pipeline akan membuat file berikut:
@@ -116,6 +142,7 @@ print(predict_probability(model, sample))
 
 ```text
 app/                Streamlit dashboard
+frontend/           React dashboard for DESIGN.md
 data/raw/           Raw datasets
 data/processed/     Processed datasets
 models/             Trained model artifacts

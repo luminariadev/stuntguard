@@ -17,6 +17,8 @@ env/
 # Streamlit
 .streamlit/secrets.toml
 streamlit.*.log
+frontend/*.log
+frontend/public/stuntguard-dashboard.json
 
 # Test and build artifacts
 .pytest_cache/
@@ -25,6 +27,8 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+node_modules/
+frontend/dist/
 
 # Local data and generated outputs
 data/raw/*.csv
